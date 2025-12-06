@@ -76,6 +76,7 @@
             padding: 12px 16px;
             border-radius: 18px;
             word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .message.user .message-content {
@@ -158,6 +159,7 @@
             margin: 10px 20px;
             border-radius: 10px;
             border-left: 4px solid #d32f2f;
+            font-size: 13px;
         }
 
         .setup-guide {
@@ -172,17 +174,30 @@
         .setup-guide strong {
             color: #e65100;
         }
+
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🤖 Chatbot AI của tôi</h1>
-            <p>Hỗ trợ bởi Google Gemini</p>
+            <p>Hỗ trợ bởi Google Gemini <span class="info-badge" id="modelBadge">Đang kết nối...</span></p>
         </div>
 
         <div id="setupGuide" class="setup-guide">
-            <strong>⚠️ Chú ý:</strong> Bạn cần thay <strong>API_KEY_CUA_BAN</strong> ở dòng 201 trong code bằng API key thực từ Google AI Studio!
+            <strong>⚠️ Hướng dẫn:</strong><br>
+            1. Lấy API key tại: <a href="https://aistudio.google.com/apikey" target="_blank">https://aistudio.google.com/apikey</a><br>
+            2. Thay <strong>API_KEY_CUA_BAN</strong> ở dòng 210 bằng API key thực của bạn<br>
+            3. Lưu file và reload trang
         </div>
 
         <div class="chat-messages" id="chatMessages">
@@ -207,17 +222,25 @@
     </div>
 
     <script>
-        // ⚠️ QUAN TRỌNG: Thay YOUR_API_KEY bằng API key thực của bạn từ Google AI Studio
+        // ⚠️ QUAN TRỌNG: Thay API_KEY_CUA_BAN bằng API key thực của bạn
         const API_KEY = 'AIzaSyCRKugV9k9TFawpug0rCTeVyGT3qoVsHKw';
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        
+        // Danh sách models để thử (theo thứ tự ưu tiên)
+        const MODELS = [
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro-latest',
+            'gemini-pro'
+        ];
+        
+        let currentModel = MODELS[0];
+        let modelIndex = 0;
 
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
         const loading = document.getElementById('loading');
-
-        // Lưu lịch sử chat
-        let conversationHistory = [];
+        const modelBadge = document.getElementById('modelBadge');
 
         function addMessage(content, isUser) {
             const messageDiv = document.createElement('div');
@@ -229,17 +252,31 @@
             
             messageDiv.appendChild(contentDiv);
             chatMessages.appendChild(messageDiv);
-            
-            // Cuộn xuống tin nhắn mới nhất
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         function showError(message) {
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
-            errorDiv.textContent = '❌ Lỗi: ' + message;
+            errorDiv.innerHTML = '❌ ' + message;
             chatMessages.appendChild(errorDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateModelBadge(model) {
+            modelBadge.textContent = model;
+            modelBadge.style.background = '#c8e6c9';
+            modelBadge.style.color = '#2e7d32';
+        }
+
+        async function tryNextModel() {
+            modelIndex++;
+            if (modelIndex < MODELS.length) {
+                currentModel = MODELS[modelIndex];
+                console.log(`Thử model: ${currentModel}`);
+                return true;
+            }
+            return false;
         }
 
         async function sendMessage() {
@@ -247,61 +284,111 @@
             
             if (!message) return;
 
-            // Kiểm tra API key
             if (API_KEY === 'API_KEY_CUA_BAN') {
                 showError('Bạn chưa thay API key! Vui lòng xem hướng dẫn ở trên.');
                 return;
             }
 
-            // Hiển thị tin nhắn người dùng
             addMessage(message, true);
             userInput.value = '';
-
-            // Vô hiệu hóa nút gửi
             sendBtn.disabled = true;
             loading.classList.add('active');
 
-            try {
-                // Gọi API Google Gemini
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: message
+            // Reset model index mỗi lần gửi tin nhắn mới
+            modelIndex = 0;
+            currentModel = MODELS[0];
+
+            let success = false;
+            let lastError = null;
+
+            while (modelIndex < MODELS.length && !success) {
+                try {
+                    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${API_KEY}`;
+                    
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: message
+                                }]
                             }]
-                        }]
-                    })
-                });
+                        })
+                    });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || 'Không thể kết nối với API');
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || 'API error');
+                    }
+
+                    // Thành công!
+                    const botReply = data.candidates[0].content.parts[0].text;
+                    addMessage(botReply, false);
+                    updateModelBadge(currentModel);
+                    success = true;
+
+                } catch (error) {
+                    console.error(`Model ${currentModel} failed:`, error);
+                    lastError = error;
+                    
+                    // Thử model tiếp theo
+                    if (!await tryNextModel()) {
+                        break;
+                    }
                 }
-
-                const data = await response.json();
-                
-                // Lấy câu trả lời từ API
-                const botReply = data.candidates[0].content.parts[0].text;
-                
-                // Hiển thị câu trả lời
-                addMessage(botReply, false);
-
-            } catch (error) {
-                console.error('Lỗi:', error);
-                showError(error.message || 'Có lỗi xảy ra khi gọi API. Vui lòng kiểm tra API key và thử lại.');
-            } finally {
-                sendBtn.disabled = false;
-                loading.classList.remove('active');
             }
+
+            if (!success) {
+                showError(`
+                    <strong>Không thể kết nối với API!</strong><br><br>
+                    <strong>Vui lòng kiểm tra:</strong><br>
+                    1. API key đã đúng chưa? (Lấy tại <a href="https://aistudio.google.com/apikey" target="_blank">đây</a>)<br>
+                    2. API key đã được kích hoạt chưa?<br>
+                    3. Kiểm tra kết nối internet<br><br>
+                    <strong>Lỗi:</strong> ${lastError?.message || 'Unknown error'}
+                `);
+            }
+
+            sendBtn.disabled = false;
+            loading.classList.remove('active');
         }
 
-        // Focus vào ô input khi tải trang
-        window.onload = () => {
+        // Test API khi tải trang
+        window.onload = async () => {
             userInput.focus();
+            
+            if (API_KEY !== 'API_KEY_CUA_BAN') {
+                // Thử kết nối để tìm model phù hợp
+                try {
+                    for (let model of MODELS) {
+                        try {
+                            const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                            const response = await fetch(testUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ parts: [{ text: 'hi' }] }]
+                                })
+                            });
+                            
+                            if (response.ok) {
+                                currentModel = model;
+                                updateModelBadge(model);
+                                document.getElementById('setupGuide').style.display = 'none';
+                                break;
+                            }
+                        } catch (e) {
+                            continue;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Không thể test API:', error);
+                }
+            }
         };
     </script>
 </body>
