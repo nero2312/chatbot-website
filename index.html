@@ -2,394 +2,805 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <title>Chatbot AI của tôi - Hỗ trợ bởi Google Gemini</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot AI của tôi</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #ec4899;
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --chat-bg: #f3f4f6;
+            --user-msg-bg: #6366f1;
+            --bot-msg-bg: #ffffff;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            height: 100vh;
+            font-family: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #a855f7 0, #1e293b 45%, #020617 100%);
+            min-height: 100vh;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
+            color: #111827;
+            padding: 16px;
         }
 
-        .container {
-            width: 90%;
-            max-width: 800px;
-            height: 90vh;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,64,175,0.95));
+            border-radius: 32px;
+            box-shadow:
+                0 20px 40px rgba(15, 23, 42, 0.75),
+                0 0 0 1px rgba(148, 163, 184, 0.3),
+                0 0 60px rgba(129, 140, 248, 0.4);
+            overflow: hidden;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+
+        .app-header {
+            padding: 20px 24px 16px 24px;
+            background: radial-gradient(circle at top left, rgba(56,189,248,0.45), transparent 55%),
+                        radial-gradient(circle at top right, rgba(244,114,182,0.4), transparent 50%),
+                        linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,64,175,0.96));
+            border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+            position: relative;
+        }
+
+        .app-header::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle at 0 0, rgba(129, 140, 248, 0.45), transparent 55%),
+                radial-gradient(circle at 100% 0, rgba(251, 113, 133, 0.4), transparent 45%);
+            mix-blend-mode: screen;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .app-header-content {
+            position: relative;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            color: white;
+        }
+
+        .bot-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: radial-gradient(circle at 30% 20%, #f9a8d4 0, #6366f1 45%, #0ea5e9 100%);
+            box-shadow:
+                0 0 0 3px rgba(15,23,42,0.8),
+                0 12px 24px rgba(15,23,42,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
             overflow: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
+        .bot-avatar::before {
+            content: "🤖";
+            font-size: 30px;
+            filter: drop-shadow(0 4px 6px rgba(15,23,42,0.8));
         }
 
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
+        .bot-status-dot {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #22c55e, #a3e635);
+            border: 2px solid #020617;
+            box-shadow: 0 0 0 1px rgba(15,23,42,0.8);
         }
 
-        .header p {
-            font-size: 14px;
+        .header-text {
+            flex: 1;
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title-badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: rgba(15,23,42,0.8);
+            border: 1px solid rgba(129, 140, 248, 0.8);
+            box-shadow: 0 0 18px rgba(129, 140, 248, 0.6);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: #e5e7eb;
+            opacity: 0.92;
+        }
+
+        .header-subtitle span {
+            color: #a5b4fc;
+            font-weight: 500;
+        }
+
+        .header-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .header-pill {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            color: #e5e7eb;
+            background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,64,175,0.7));
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-pill-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3);
+        }
+
+        .header-pill-badge {
+            background: rgba(37, 99, 235, 0.5);
+            border-color: rgba(129, 140, 248, 0.8);
+            color: #e0f2fe;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            min-width: 140px;
+        }
+
+        .connect-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.9);
+            border: 1px solid rgba(129, 140, 248, 0.75);
+            color: #e5e7eb;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .connect-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #4ade80;
+            box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.4);
+        }
+
+        .quota-badge {
+            font-size: 11px;
+            color: #e5e7eb;
             opacity: 0.9;
+        }
+
+        .guide-box {
+            margin: 0 20px 12px 20px;
+            padding: 10px 12px;
+            background: rgba(248, 250, 252, 0.07);
+            border-radius: 12px;
+            border: 1px solid rgba(249, 250, 251, 0.16);
+            color: #e5e7eb;
+            font-size: 12px;
+            line-height: 1.4;
+            display: flex;
+            gap: 10px;
+        }
+
+        .guide-icon {
+            color: #facc15;
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .guide-content strong {
+            color: #facc15;
+        }
+
+        .guide-content a {
+            color: #a5b4fc;
+        }
+
+        .guide-steps {
+            margin-top: 2px;
+        }
+
+        .guide-steps li {
+            margin-left: 16px;
+        }
+
+        .chat-container {
+            background: radial-gradient(circle at top, rgba(248,250,252,0.09), rgba(15,23,42,1));
+            padding: 14px 18px 18px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 420px;
+            border-top: 1px solid rgba(15,23,42,0.9);
+        }
+
+        .chat-messages-wrapper {
+            background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(15,23,42,1));
+            border-radius: 20px;
+            padding: 12px 14px;
+            box-shadow:
+                inset 0 0 0 1px rgba(30, 64, 175, 0.7),
+                0 10px 25px rgba(15, 23, 42, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 220px;
         }
 
         .chat-messages {
             flex: 1;
-            padding: 20px;
             overflow-y: auto;
-            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 360px;
+            padding-right: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.5);
+            border-radius: 999px;
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(129,140,248,0.12));
+            border-radius: 16px;
+            padding: 10px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            color: #e5e7eb;
+            font-size: 13px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .welcome-icon {
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .welcome-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: #e5e7eb;
+        }
+
+        .welcome-desc {
+            font-size: 12px;
+            color: #cbd5f5;
         }
 
         .message {
-            margin-bottom: 15px;
             display: flex;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            margin-bottom: 4px;
         }
 
         .message.user {
             justify-content: flex-end;
         }
 
+        .message.bot {
+            justify-content: flex-start;
+        }
+
         .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
-            white-space: pre-wrap;
+            max-width: 80%;
+            padding: 9px 12px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.4;
+            box-shadow: 0 8px 16px rgba(15,23,42,0.7);
         }
 
         .message.user .message-content {
-            background: #667eea;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
             border-bottom-right-radius: 4px;
         }
 
         .message.bot .message-content {
-            background: white;
-            color: #333;
+            background: rgba(15,23,42,0.95);
+            color: #e5e7eb;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid rgba(148, 163, 184, 0.5);
         }
 
         .input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
+            margin-top: 4px;
             display: flex;
+            align-items: stretch;
             gap: 10px;
         }
 
-        #userInput {
+        .input-wrapper {
             flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            font-size: 14px;
+            position: relative;
+        }
+
+        #userInput {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            background: rgba(15,23,42,0.95);
+            color: #e5e7eb;
+            font-size: 13px;
             outline: none;
-            transition: border-color 0.3s;
+            padding-right: 36px;
+        }
+
+        #userInput::placeholder {
+            color: #9ca3af;
         }
 
         #userInput:focus {
-            border-color: #667eea;
+            border-color: #818cf8;
+            box-shadow:
+                0 0 0 1px rgba(129, 140, 248, 0.7),
+                0 0 0 6px rgba(129, 140, 248, 0.25);
         }
 
-        #sendBtn {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .send-btn {
             border: none;
-            border-radius: 25px;
+            border-radius: 999px;
+            padding: 0 18px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow:
+                0 16px 30px rgba(79, 70, 229, 0.65),
+                0 0 0 1px rgba(249, 250, 251, 0.2);
+            white-space: nowrap;
         }
 
-        #sendBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .send-btn span {
+            font-size: 15px;
         }
 
-        #sendBtn:active {
-            transform: translateY(0);
-        }
-
-        #sendBtn:disabled {
+        .send-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
+            box-shadow: none;
         }
 
-        .loading {
-            display: none;
-            padding: 10px;
-            color: #667eea;
-            font-style: italic;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
-        .error-message {
-            background: #ffe6e6;
-            color: #d32f2f;
-            padding: 15px;
-            margin: 10px 20px;
-            border-radius: 10px;
-            border-left: 4px solid #d32f2f;
-            font-size: 13px;
-        }
-
-        .setup-guide {
-            background: #fff9e6;
-            padding: 15px;
-            margin: 10px 20px;
-            border-radius: 10px;
-            border-left: 4px solid #ffa726;
-            font-size: 13px;
-        }
-
-        .setup-guide strong {
-            color: #e65100;
-        }
-
-        .info-badge {
-            display: inline-block;
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 4px 10px;
-            border-radius: 12px;
+        .input-hint {
+            margin-top: 4px;
             font-size: 11px;
-            margin-left: 10px;
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-hint span {
+            color: #e5e7eb;
+        }
+
+        .error-box {
+            margin-top: 6px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(248, 113, 113, 0.08);
+            border: 1px solid rgba(248, 113, 113, 0.65);
+            color: #fecaca;
+            font-size: 12px;
+            display: none;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .error-box.active {
+            display: flex;
+        }
+
+        .error-icon {
+            font-size: 16px;
+            margin-top: 1px;
+        }
+
+        .error-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #e5e7eb;
+            margin-top: 6px;
+        }
+
+        .loading-indicator.active {
+            display: inline-flex;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #a5b4fc;
+            animation: pulse 1s infinite alternate;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.3; transform: translateY(2px); }
+            to { opacity: 1; transform: translateY(-1px); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message {
+            animation: slideUp 0.18s ease-out;
+        }
+
+        .footer {
+            padding: 10px 18px 14px 18px;
+            border-top: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at bottom, rgba(15,23,42,1), rgba(15,23,42,0.95));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .footer a {
+            color: #c4b5fd;
+        }
+
+        @media (max-width: 640px) {
+            .app-container {
+                border-radius: 24px;
+            }
+            .app-header {
+                padding: 16px 16px 10px 16px;
+            }
+            .app-header-content {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            .header-actions {
+                display: none;
+            }
+            .chat-container {
+                padding: 12px 12px 16px 12px;
+            }
+            .guide-box {
+                margin: 0 14px 10px 14px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🤖 Chatbot AI của tôi</h1>
-            <p>Hỗ trợ bởi Google Gemini <span class="info-badge" id="modelBadge">Đang kết nối...</span></p>
-        </div>
-
-        <div id="setupGuide" class="setup-guide">
-            <strong>⚠️ Hướng dẫn:</strong><br>
-            1. Lấy API key tại: <a href="https://aistudio.google.com/apikey" target="_blank">https://aistudio.google.com/apikey</a><br>
-            2. Thay <strong>API_KEY_CUA_BAN</strong> ở dòng 210 bằng API key thực của bạn<br>
-            3. Lưu file
-        </div>
-
-        <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
-                <div class="message-content">
-                    Xin chào! 👋 Tôi là chatbot AI. Tôi có thể giúp gì cho bạn hôm nay?
+<div class="app-container">
+    <div class="app-header">
+        <div class="app-header-content">
+            <div class="bot-avatar">
+                <div class="bot-status-dot"></div>
+            </div>
+            <div class="header-text">
+                <div class="header-title-row">
+                    <div class="header-title">
+                        Chatbot AI của tôi
+                        <div class="header-title-badge">
+                            <span>Hỗ trợ bởi</span>
+                            <span>Google Gemini</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-subtitle">
+                    Trợ lý hành chính – nhân sự nội bộ. Hỏi về <span>phép năm</span>, <span>chấm công</span>, <span>lương</span>,
+                    <span>quy định công ty</span>,… và nhiều hơn nữa.
+                </div>
+                <div class="header-pill-row">
+                    <div class="header-pill header-pill-badge">
+                        <span class="header-pill-dot"></span>
+                        Đang kết nối API
+                    </div>
+                    <div class="header-pill">
+                        ⚙️ Gemini API • Free tier
+                    </div>
+                    <div class="header-pill">
+                        🔐 API key lưu cục bộ (demo)
+                    </div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="connect-badge">
+                    <span class="connect-dot"></span>
+                    Đang hoạt động
+                </div>
+                <div class="quota-badge">
+                    Dùng model: <strong>gemini-1.5-flash-latest</strong>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="loading" id="loading">Đang suy nghĩ...</div>
-
-        <div class="input-area">
-            <input 
-                type="text" 
-                id="userInput" 
-                placeholder="Nhập tin nhắn của bạn..." 
-                onkeypress="if(event.key==='Enter') sendMessage()"
-            >
-            <button id="sendBtn" onclick="sendMessage()">Gửi</button>
+    <div class="guide-box">
+        <div class="guide-icon">⚠️</div>
+        <div class="guide-content">
+            <strong>Hướng dẫn:</strong>
+            <div class="guide-steps">
+                <ol>
+                    <li>Lấy API key tại: <a href="https://aistudio.google.com/apikey" target="_blank">https://aistudio.google.com/apikey</a></li>
+                    <li>Trong file <strong>index.html</strong>, thay chuỗi <code>YOUR_API_KEY_HERE</code> bằng API key thật của bạn.</li>
+                    <li>Lưu file và load lại trang, sau đó thử nhắn “Xin chào” để kiểm tra.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <script>
-        // ⚠️ QUAN TRỌNG: Thay API_KEY_CUA_BAN bằng API key thực của bạn
-        const API_KEY = 'AIzaSyBzljH2aCuM03MqnC6Nny5e30JjMzljj1I';
-        
-        // Danh sách models để thử (theo thứ tự ưu tiên)
-        const MODELS = [
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-flash',
-            'gemini-1.5-pro-latest',
-            'gemini-pro'
-        ];
-        
-        let currentModel = MODELS[0];
-        let modelIndex = 0;
+    <div class="chat-container">
+        <div class="chat-messages-wrapper">
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <div class="welcome-icon">👋</div>
+                    <div>
+                        <div class="welcome-title">Xin chào! Tôi là chatbot AI hỗ trợ hành chính – nhân sự.</div>
+                        <div class="welcome-desc">
+                            Bạn có thể hỏi tôi về: phép năm, quy định đi trễ – về sớm, lương – phụ cấp, bảo hiểm xã hội,
+                            nội quy công ty, quy trình xin nghỉ việc, thử việc, ký HĐLĐ,… 🎯
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        const chatMessages = document.getElementById('chatMessages');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const loading = document.getElementById('loading');
-        const modelBadge = document.getElementById('modelBadge');
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input id="userInput" type="text" placeholder="Nhập câu hỏi của bạn về hành chính – nhân sự..." />
+                </div>
+                <button id="sendBtn" class="send-btn">
+                    <span>Gửi</span>
+                    <span>🚀</span>
+                </button>
+            </div>
 
-        function addMessage(content, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
-            
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'message-content';
-            contentDiv.textContent = content;
-            
-            messageDiv.appendChild(contentDiv);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            <div class="input-hint">
+                <div>Ví dụ: <span>“Tôi được nghỉ phép năm bao nhiêu ngày?”</span></div>
+                <div>
+                    Model: gemini-1.5-flash-latest
+                </div>
+            </div>
+
+            <div id="errorBox" class="error-box">
+                <div class="error-icon">❌</div>
+                <div>
+                    <div class="error-title">Không thể kết nối với API!</div>
+                    <div id="errorMessage"></div>
+                </div>
+            </div>
+
+            <div id="loading" class="loading-indicator">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <span>Chatbot đang suy nghĩ…</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div>
+            Demo chatbot HCNS · Dùng Google AI Studio (Gemini API)
+        </div>
+        <div>
+            Lưu ý: API key đặt trong file HTML chỉ nên dùng nội bộ / thử nghiệm
+        </div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ BƯỚC 1: Thay API key của bạn vào đây
+    const API_KEY = 'AIzaSyBzljH2aCuM03MqnC6Nny5e30JjMzljj1I';
+
+    // ⚠️ BƯỚC 2: Dùng endpoint & model mới (v1 + gemini-1.5-flash-latest)
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-3.0:generateContent?key=${API_KEY}`;
+
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const loading = document.getElementById('loading');
+    const errorBox = document.getElementById('errorBox');
+    const errorMessage = document.getElementById('errorMessage');
+
+    let conversationHistory = [];
+
+    function addMessage(content, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = content;
+
+        messageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorBox.classList.add('active');
+    }
+
+    function hideError() {
+        errorBox.classList.remove('active');
+    }
+
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        hideError();
+
+        if (!message) return;
+
+        if (API_KEY === 'YOUR_API_KEY_HERE') {
+            showError('Bạn chưa thay API key! Vui lòng xem hướng dẫn ở trên.');
+            return;
         }
 
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = '❌ ' + message;
-            chatMessages.appendChild(errorDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+        addMessage(message, true);
+        userInput.value = '';
 
-        function updateModelBadge(model) {
-            modelBadge.textContent = model;
-            modelBadge.style.background = '#c8e6c9';
-            modelBadge.style.color = '#2e7d32';
-        }
+        sendBtn.disabled = true;
+        loading.classList.add('active');
 
-        async function tryNextModel() {
-            modelIndex++;
-            if (modelIndex < MODELS.length) {
-                currentModel = MODELS[modelIndex];
-                console.log(`Thử model: ${currentModel}`);
-                return true;
-            }
-            return false;
-        }
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text:
+`Bạn là chatbot nội bộ của phòng Hành chính - Nhân sự tại một công ty logistics ở Việt Nam.
+Trả lời ngắn gọn, rõ ràng, thân thiện, bằng tiếng Việt (có thể thêm ví dụ thực tế nếu cần).
 
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            
-            if (!message) return;
+Câu hỏi của nhân viên: ${message}`
+                                }
+                            ]
+                        }
+                    ]
+                })
+            });
 
-            if (API_KEY === 'API_KEY_CUA_BAN') {
-                showError('Bạn chưa thay API key! Vui lòng xem hướng dẫn ở trên.');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API Error:', errorData);
+                let msg = 'Có lỗi xảy ra khi gọi API.';
+
+                if (errorData && errorData.error && errorData.error.message) {
+                    msg += ' Chi tiết: ' + errorData.error.message;
+                } else if (response.status === 401 || response.status === 403) {
+                    msg += ' Vui lòng kiểm tra lại API key hoặc quyền truy cập.';
+                } else if (response.status === 404) {
+                    msg += ' Model không tồn tại. Hãy kiểm tra lại tên model.';
+                }
+
+                showError(msg);
                 return;
             }
 
-            addMessage(message, true);
-            userInput.value = '';
-            sendBtn.disabled = true;
-            loading.classList.add('active');
+            const data = await response.json();
 
-            // Reset model index mỗi lần gửi tin nhắn mới
-            modelIndex = 0;
-            currentModel = MODELS[0];
+            const botReply =
+                data.candidates?.[0]?.content?.parts?.[0]?.text ||
+                'Xin lỗi, tôi chưa hiểu câu hỏi. Bạn có thể hỏi lại theo cách khác được không?';
 
-            let success = false;
-            let lastError = null;
-
-            while (modelIndex < MODELS.length && !success) {
-                try {
-                    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite-preview:generateContent?key=${API_KEY}`;
-                    
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{
-                                    text: message
-                                }]
-                            }]
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (!response.ok) {
-                        throw new Error(data.error?.message || 'API error');
-                    }
-
-                    // Thành công!
-                    const botReply = data.candidates[0].content.parts[0].text;
-                    addMessage(botReply, false);
-                    updateModelBadge(currentModel);
-                    success = true;
-
-                } catch (error) {
-                    console.error(`Model ${currentModel} failed:`, error);
-                    lastError = error;
-                    
-                    // Thử model tiếp theo
-                    if (!await tryNextModel()) {
-                        break;
-                    }
-                }
-            }
-
-            if (!success) {
-                showError(`
-                    <strong>Không thể kết nối với API!</strong><br><br>
-                    <strong>Vui lòng kiểm tra:</strong><br>
-                    1. API key đã đúng chưa? (Lấy tại <a href="https://aistudio.google.com/apikey" target="_blank">đây</a>)<br>
-                    2. API key đã được kích hoạt chưa?<br>
-                    3. Kiểm tra kết nối internet<br><br>
-                    <strong>Lỗi:</strong> ${lastError?.message || 'Unknown error'}
-                `);
-            }
-
+            addMessage(botReply, false);
+        } catch (error) {
+            console.error('Lỗi:', error);
+            showError(error.message || 'Có lỗi xảy ra khi gọi API. Vui lòng kiểm tra API key và thử lại.');
+        } finally {
             sendBtn.disabled = false;
             loading.classList.remove('active');
         }
+    }
 
-        // Test API khi tải trang
-        window.onload = async () => {
-            userInput.focus();
-            
-            if (API_KEY !== 'API_KEY_CUA_BAN') {
-                // Thử kết nối để tìm model phù hợp
-                try {
-                    for (let model of MODELS) {
-                        try {
-                            const testUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-                            const response = await fetch(testUrl, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    contents: [{ parts: [{ text: 'hi' }] }]
-                                })
-                            });
-                            
-                            if (response.ok) {
-                                currentModel = model;
-                                updateModelBadge(model);
-                                document.getElementById('setupGuide').style.display = 'none';
-                                break;
-                            }
-                        } catch (e) {
-                            continue;
-                        }
-                    }
-                } catch (error) {
-                    console.log('Không thể test API:', error);
-                }
-            }
-        };
-    </script>
+    sendBtn.addEventListener('click', sendMessage);
+
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    window.onload = () => {
+        userInput.focus();
+    };
+</script>
 </body>
 </html>
